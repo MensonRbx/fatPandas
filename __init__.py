@@ -13,12 +13,16 @@ import scatter
 import pie
 import bar
 import line
+import hist
+import box
 
 plotDict = {
     "pie": pie.getPiePlots,
     "scatter": scatter.getScatterPlots,
     "bar": bar.getBarPlots,
-    "line": line.getLinePlots 
+    "line": line.getLinePlots,
+    "hist": hist.getHistograms,
+    "box": box.getBoxPlots
 }
 
 class FatPanda:    
@@ -31,6 +35,6 @@ df = pd.read_csv("ibis-product-group-sales-report.csv")
 
 instance.getPlots(
     df,
-    "line",
-    "Year/Month"
+    "box",
+    #"Year/Month"
 )
