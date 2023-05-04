@@ -14,7 +14,7 @@ TODO:
 #Base imports
 import pandas as pd
 
-from py_plotModules import scatter, pie, bar, line, hist, box, area
+from py_plotModules import scatter, pie, bar, line, hist, box, area, checkIfPandasObject
 
 plotDict = {
     "pie": pie.getPiePlots,
@@ -27,22 +27,30 @@ plotDict = {
 }
 
 class FatPanda:    
+    
+    def __init__(self):
+        pass
+    
     def getPlots(self, pandasObject, *, kind, kwargs):
        # print(*args)
         
         if not kind:
             return
+            
+        checkIfPandasObject.check(pandasObject)
         
         plotDict[kind](pandasObject, kwargs)
+        
+if __name__ == "__main__":
+    instance = FatPanda()
+    df = pd.read_csv("py_testdata/ibis-product-group-sales-report.csv")
 
-instance = FatPanda()
-df = pd.read_csv("py_testdata/ibis-product-group-sales-report.csv")
-
-instance.getPlots(
-    df,
-    kind = "hist",
-    kwargs = {
-        #"title": "Test","
-        #"orientation": "horizontal"
-    }
-)
+    instance.getPlots(
+        df,
+        kind = "bar",
+        kwargs = {
+            "x": "Year/Month"
+            #"title": "Test","
+            #"orientation": "horizontal"
+        }
+    )

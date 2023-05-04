@@ -5,14 +5,19 @@ Created on Tue Apr 25 21:24:46 2023
 @author: BigBoy
 """
 
+import os
 import matplotlib.pyplot as plt
-import checkIfPandasObject
+
+import string
+import random
+
+def random_string(length):
+    letters = string.ascii_letters + string.digits + '_'
+    return ''.join(random.choice(letters) for i in range(length))
 
 def getBarPlots(dataFrame, kwargs):
-    checkIfPandasObject.check(dataFrame)
         
     #what makes a plot meaningful?
-    print(kwargs)
         
     for index, column in dataFrame.iteritems():
             
@@ -22,14 +27,26 @@ def getBarPlots(dataFrame, kwargs):
             
 def _plotBar(dataFrame, yAxisName, kwargs):
         
+    print("PLOTTING BAR")
+    
     fig, axs = plt.subplots(1, 1, figsize = (5, 5))
     
     kwargs["y"] = yAxisName
     kwargs["ax"] = axs
         
-    dataFrame.plot.bar(**kwargs)
-        
     x = kwargs["x"]
     
     if not "title" in kwargs:
         axs.set_title(f'Bar Plot Showing Relationship Between {x} and {yAxisName}')
+    
+    #path to saveto
+    
+    home_dir = os.getcwd()
+    print(home_dir)
+    fileName = f'{random_string(16)}.png'
+    print(fileName)
+    path = f"{home_dir}\\temp\\{fileName}"
+    print(path)
+
+    dataFrame.plot.bar(**kwargs).get_figure().savefig(path)
+    

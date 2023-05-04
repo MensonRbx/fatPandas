@@ -1,10 +1,15 @@
 
 import matplotlib.pyplot as plt
-import checkIfPandasObject    
+
+import string
+import random
+
+def random_string(length):
+    letters = string.ascii_letters + string.digits + '_'
+    return ''.join(random.choice(letters) for i in range(length))
 
 #todo
 def getLinePlots(pandasObject, kwargs):
-    checkIfPandasObject.check(pandasObject)
         
     #seems exactly the same as the bar plot, must investigate
         
@@ -20,8 +25,8 @@ def _plotLine(pandasObject, yAxisName, kwargs):
     kwargs["y"] = yAxisName
     kwargs["ax"] = axs
         
-    pandasObject.plot.line(**kwargs)
-        
     if not "title" in kwargs:
         axs.set_title(f'Line Plot Showing Relationship Between {kwargs["x"]} and {yAxisName}')
      
+    pandasObject.plot.line(**kwargs).get_figure().savefig("temp", f'{random_string(16)}.png')
+        

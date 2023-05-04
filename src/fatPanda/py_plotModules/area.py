@@ -5,10 +5,15 @@ Created on Fri Apr 28 14:54:32 2023
 @author: BigBoy
 """
 import matplotlib.pyplot as plt
-import checkIfPandasObject
+
+import string
+import random
+
+def random_string(length):
+    letters = string.ascii_letters + string.digits + '_'
+    return ''.join(random.choice(letters) for i in range(length))
 
 def getAreaPlots(pandasObject, kwargs):
-    assert checkIfPandasObject.check(pandasObject) == "DataFrame", "PandasObject passed must be DataFrame!"
     
     axs = None
     
@@ -28,8 +33,8 @@ def _plotAreaPlotsFromSeries(pandasObject, series, axs, kwargs):
     else:
         _, axs = plt.subplots(1, 1, figsize = (5, 5))
         kwargs["ax"] = axs
-        
-    series.plot.area(**kwargs)
     
     if not "title" in kwargs:
-        axs.set_title('Area Plot')
+        axs.set_title('Area Plot')    
+    
+    series.plot.area(**kwargs).get_figure().savefig(f'temp/{random_string(16)}.png')

@@ -6,10 +6,15 @@ Created on Thu Apr 27 15:44:29 2023
 """
 
 import matplotlib.pyplot as plt
-import checkIfPandasObject
+
+import string
+import random
+
+def random_string(length):
+    letters = string.ascii_letters + string.digits + '_'
+    return ''.join(random.choice(letters) for i in range(length))
 
 def getHistograms(pandasObject, kwargs):
-    assert checkIfPandasObject.check(pandasObject) == "DataFrame", "PandasObject passed must be DataFrame!"
     
     for _, column in pandasObject.iteritems():
         
@@ -26,7 +31,7 @@ def _plotHistogramFromSeries(series, kwargs):
     if not "bins" in kwargs:
         kwargs["bins"] = round(len(series)/1.33)
     
-    series.plot.hist(**kwargs)
-    
     if not "title" in kwargs:
         axs.set_title(f'Histogram Showing Distribution of {series.name}')
+        
+    series.plot.hist(**kwargs).get_figure().savefig(f'{random_string(16)}.png')

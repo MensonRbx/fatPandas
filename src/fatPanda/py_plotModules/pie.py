@@ -5,15 +5,21 @@ Created on Tue Apr 25 21:24:46 2023
 @author: BigBoy
 """
 
+import pandas as pd
 import matplotlib.pyplot as plt
-import checkIfPandasObject
+
+import string
+import random
+
+def random_string(length):
+    letters = string.ascii_letters + string.digits + '_'
+    return ''.join(random.choice(letters) for i in range(length))
 
 def getPiePlots(pandasObject, kwargs):
-     pandasObjectType = checkIfPandasObject.check(pandasObject)
-     
-     if pandasObjectType == "DataFrame":
+    
+     if pandasObject.__class__.__name__ == "DataFrame":
          _getPiePlotsFromDataFrame(pandasObject, kwargs)
-     elif pandasObjectType == "Series":
+     elif pandasObject.__class__.__name__ == "Series":
          _checkColumnToPiePlot(pandasObject, kwargs)
              
 def _getPiePlotsFromDataFrame(dataFrame, kwargs):
@@ -34,13 +40,22 @@ def _checkColumnToPiePlot(column, kwargs):
 def _plotPie(column, kwargs): #works for series too
     fig, axs = plt.subplots(1, 1, figsize = (5, 5))
     
-    del kwargs["minProportion"]
-     
-    kwargs["ax"] = axs
-    kwargs["autopct"] = "%.1f%%"
-    kwargs["ylabel"] = None
+    kwCopy = kwargs.copy()
     
-    column.plot.pie(**kwargs)
+    del kwCopy ["minProportion"]
+     
+    kwCopy["ax"] = axs
+    kwCopy["autopct"] = "%.1f%%"
+    kwCopy["ylabel"] = None
+    
+    column.plot.pie(**kwCopy).get_figure().savefig(f'{random_string(16)}.png')
          
-    if not "title" in kwargs:
+    if not "title" in kwCopy:
         axs.set_title(f'Pie Chart Showing {column.name} proportion')
+        
+        
+if __name__ == "__main__":
+    
+    df = pd.DataFrame([[10, 1, 3], [9, 3, 1], [12, 2, 0]], ["Jojo", "One Piece", "NGE"], ["Number of Viewers", "Episides", "Rating"])
+    getPiePlots(df, {"minProportion": 0.5})
+    
