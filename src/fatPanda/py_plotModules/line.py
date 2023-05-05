@@ -1,4 +1,5 @@
 
+import os
 import matplotlib.pyplot as plt
 
 import string
@@ -27,6 +28,13 @@ def _plotLine(pandasObject, yAxisName, kwargs):
         
     if not "title" in kwargs:
         axs.set_title(f'Line Plot Showing Relationship Between {kwargs["x"]} and {yAxisName}')
+    
+    home_dir = os.getcwd()
+    print(home_dir)
+    fileName = f'{random_string(16)}.png'
+    print(fileName)
+    path = f"{home_dir}\\temp\\{fileName}"
+    print(path)
      
-    pandasObject.plot.line(**kwargs).get_figure().savefig("temp", f'{random_string(16)}.png')
+    pandasObject.plot.line(**kwargs).get_figure().savefig(path)
         

@@ -42,15 +42,4 @@ class FatPanda:
         plotDict[kind](pandasObject, kwargs)
         
 if __name__ == "__main__":
-    instance = FatPanda()
-    df = pd.read_csv("py_testdata/ibis-product-group-sales-report.csv")
-
-    instance.getPlots(
-        df,
-        kind = "bar",
-        kwargs = {
-            "x": "Year/Month"
-            #"title": "Test","
-            #"orientation": "horizontal"
-        }
-    )
+    pass

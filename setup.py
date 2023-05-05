@@ -38,16 +38,10 @@ class MyWindow(QMainWindow):
         
         self.fatPandaInstance = FatPanda_Module.FatPanda()
         self.currentFile = None
-        
-        screen = QDesktopWidget().screenGeometry()
-
-        # Calculate the center point of the screen
-        center_x = (screen.width() - self.width()) / 2
-        center_y = (screen.height() - self.height()) / 2
-
+    
         # Set window properties
         self.setWindowTitle("My Window")
-        self.setGeometry(int(center_x), int(center_y), 700, 650)
+        self.setGeometry(100, 100, 1000, 800)
 
         # Add plot selection
         self.plotLabel = QLabel(self)
@@ -78,12 +72,12 @@ class MyWindow(QMainWindow):
         
         # Create a scroll area widget
         self.scrollArea = QScrollArea(self)
-        self.scrollArea.setGeometry(self.width() - 420, 40, 380, 280)
+        self.scrollArea.setGeometry(self.width() - 750, 40, 700, 700)
       
         # Create a container widget for the images
         self.imageContainer = QWidget()
         self.imageLayout = QVBoxLayout(self.imageContainer)
-        self.imageContainer.setGeometry(0, 0, 400, 1000)  # Set larger size than the scroll area
+        self.imageContainer.setGeometry(0, 0, 700, 1500)  # Set larger size than the scroll area
         self.scrollArea.setWidget(self.imageContainer)
         self.scrollArea.setWidgetResizable(True)
 
@@ -132,38 +126,46 @@ class MyWindow(QMainWindow):
         )
         
         self.addPlotImages()
+        self.deleteImageFiles()
             
     def addPlotImages(self):
         
         print("plotting images")
         
-        path = "src\\fatPanda\\temp"
+        home_dir = os.getcwd()
+        path = f"{home_dir}\\temp"
         
         for filename in set(os.listdir(path)):
             
-            print(filename)
-            
-            if not filename.endswith('.png') or not filename.endswith(".jpg"):
-                return
+            if not filename.endswith('.png'):
+                continue
+                continue
+
+            print("Adding file to window!")
+
             pixmap = QPixmap(os.path.join(path, filename))
             label = QLabel(self.imageContainer)
             label.setPixmap(pixmap)
-            label.setFixedSize(300, 300)
-            label.setScaledContents(True)
+            label.setFixedSize(600, 500)
             self.imageLayout.addWidget(label)
     
     def deleteCurrentImages(self):
-        
-        path = "src\\fatPanda\\temp"
-        
         while self.imageLayout.count():
             child = self.imageLayout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-                
+            
+    def deleteImageFiles(self):
+        home_dir = os.getcwd()
+        path = f"{home_dir}\\temp"
         for filename in set(os.listdir(path)):
-            continue
 
+            filePath = os.path.join(path, filename)
+            
+            try:
+                os.remove(filePath)
+            except:
+                continue
 
 if __name__ == '__main__':
    app = QApplication([])
