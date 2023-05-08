@@ -12,8 +12,7 @@ import importlib
 
 import pandas as pd
 
-import src.fatPanda as FatPanda_Module
-
+from src.fatPanda import FatPanda
 
 from time import sleep
 
@@ -32,15 +31,31 @@ plotTypeDict = {
     
 }
 
+method_filetype_mapping = {
+    'read_csv': ['.csv'],
+    'read_excel': ['.xls', '.xlsx'],
+    'read_json': ['.json'],
+    'read_html': ['.html'],
+    'read_feather': ['.feather'],
+    'read_parquet': ['.parquet'],
+    'read_hdf': ['.h5', '.hdf'],
+    'read_pickle': ['.pkl'],
+    'read_sas': ['.sas7bdat', '.sas'],
+    'read_spss': ['.sav'],
+    'read_stata': ['.dta'],
+    'read_table': ['.txt', '.csv']
+}
+
 class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        self.fatPandaInstance = FatPanda_Module.FatPanda()
+        self.fatPandaInstance = FatPanda()
         self.currentFile = None
     
         # Set window properties
-        self.setWindowTitle("My Window")
+        self.setWindowIcon()
+        self.setWindowTitle("Fat Panda")
         self.setGeometry(100, 100, 1000, 800)
 
         # Add plot selection
@@ -69,7 +84,6 @@ class MyWindow(QMainWindow):
         self.nameOfFileLabel.setText("File Name")
         self.nameOfFileLabel.move(137, 80)
         
-        
         # Create a scroll area widget
         self.scrollArea = QScrollArea(self)
         self.scrollArea.setGeometry(self.width() - 750, 40, 700, 700)
@@ -96,8 +110,6 @@ class MyWindow(QMainWindow):
             self.nameOfFileLabel.setText(name)
         
     def onPlotButtonClicked(self):
-    
-        print("ere0")
         
         if not self.currentFile:
             warning = QMessageBox()
@@ -107,15 +119,18 @@ class MyWindow(QMainWindow):
             warning.setStandardButtons(QMessageBox.Ok)
             warning.exec_()
         else:
-            print("ere1")
             self._generatePlot()
         
         
     def _generatePlot(self):
-        self.deleteCurrentImages()
+        plotMethodName = self._getMappingMethod()
         
-        #currently .csv, will expand
-        df = pd.read_csv(self.currentFile)
+        assert plotMethodName, "Error at _generate plot, no appropriate plot method found"
+        
+        self.deleteCurrentImages()
+        df = pd[plotMethodName](self.currentFile)
+        
+        return
         
         self.fatPandaInstance.getPlots(
             df, 
@@ -127,6 +142,14 @@ class MyWindow(QMainWindow):
         
         self.addPlotImages()
         self.deleteImageFiles()
+        
+    def _getMappingMethod(self):
+        
+        for methodName, fileTypeArray in method_filetype_mapping.items():
+            fileType = self.currentFile.split(".")[-1]
+            if fileType in fileTypeArray: 
+                return methodName
+        
             
     def addPlotImages(self):
         
@@ -139,9 +162,6 @@ class MyWindow(QMainWindow):
             
             if not filename.endswith('.png'):
                 continue
-                continue
-
-            print("Adding file to window!")
 
             pixmap = QPixmap(os.path.join(path, filename))
             label = QLabel(self.imageContainer)
@@ -159,9 +179,7 @@ class MyWindow(QMainWindow):
         home_dir = os.getcwd()
         path = f"{home_dir}\\temp"
         for filename in set(os.listdir(path)):
-
             filePath = os.path.join(path, filename)
-            
             try:
                 os.remove(filePath)
             except:
