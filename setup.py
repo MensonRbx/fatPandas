@@ -32,18 +32,10 @@ plotTypeDict = {
 }
 
 method_filetype_mapping = {
-    'read_csv': ['.csv'],
-    'read_excel': ['.xls', '.xlsx'],
-    'read_json': ['.json'],
-    'read_html': ['.html'],
-    'read_feather': ['.feather'],
-    'read_parquet': ['.parquet'],
-    'read_hdf': ['.h5', '.hdf'],
-    'read_pickle': ['.pkl'],
-    'read_sas': ['.sas7bdat', '.sas'],
-    'read_spss': ['.sav'],
-    'read_stata': ['.dta'],
-    'read_table': ['.txt', '.csv']
+    'read_csv': ['csv'],
+    'read_excel': ['xls', 'xlsx'],
+    'read_json': ['json'],
+    'read_html': ['html']
 }
 
 class MyWindow(QMainWindow):
@@ -54,9 +46,9 @@ class MyWindow(QMainWindow):
         self.currentFile = None
     
         # Set window properties
-        self.setWindowIcon()
+       # self.setWindowIcon()
         self.setWindowTitle("Fat Panda")
-        self.setGeometry(100, 100, 1000, 800)
+        self.setGeometry(100, 100, 750, 500)
 
         # Add plot selection
         self.plotLabel = QLabel(self)
@@ -86,12 +78,12 @@ class MyWindow(QMainWindow):
         
         # Create a scroll area widget
         self.scrollArea = QScrollArea(self)
-        self.scrollArea.setGeometry(self.width() - 750, 40, 700, 700)
+        self.scrollArea.setGeometry(self.width() - 420, 40, 400, 400)
       
         # Create a container widget for the images
         self.imageContainer = QWidget()
         self.imageLayout = QVBoxLayout(self.imageContainer)
-        self.imageContainer.setGeometry(0, 0, 700, 1500)  # Set larger size than the scroll area
+        self.imageContainer.setGeometry(0, 0, 100, 1500)  # Set larger size than the scroll area
         self.scrollArea.setWidget(self.imageContainer)
         self.scrollArea.setWidgetResizable(True)
 
@@ -128,9 +120,11 @@ class MyWindow(QMainWindow):
         assert plotMethodName, "Error at _generate plot, no appropriate plot method found"
         
         self.deleteCurrentImages()
-        df = pd[plotMethodName](self.currentFile)
+        self.deleteImageFiles()
         
-        return
+        method = getattr(pd, plotMethodName)
+        
+        df = method(self.currentFile)
         
         self.fatPandaInstance.getPlots(
             df, 
@@ -141,12 +135,12 @@ class MyWindow(QMainWindow):
         )
         
         self.addPlotImages()
-        self.deleteImageFiles()
         
     def _getMappingMethod(self):
         
         for methodName, fileTypeArray in method_filetype_mapping.items():
             fileType = self.currentFile.split(".")[-1]
+            print(fileType)
             if fileType in fileTypeArray: 
                 return methodName
         
@@ -166,7 +160,7 @@ class MyWindow(QMainWindow):
             pixmap = QPixmap(os.path.join(path, filename))
             label = QLabel(self.imageContainer)
             label.setPixmap(pixmap)
-            label.setFixedSize(600, 500)
+            label.setFixedSize(600, 400)
             self.imageLayout.addWidget(label)
     
     def deleteCurrentImages(self):
