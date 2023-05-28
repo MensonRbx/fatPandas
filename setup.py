@@ -2,7 +2,7 @@
 """
 Created on Sun Apr 30 15:24:46 2023
 
-@author: ChatGPT, mensonrbx
+@author: ChatGPT (have to give it some credit), mensonrbx
 
 File creates .exe for app
 """
@@ -14,10 +14,8 @@ import pandas as pd
 
 from src.fatPanda import FatPanda
 
-from time import sleep
-
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMessageBox, QFileDialog, QScrollArea, QComboBox, QDesktopWidget, QMainWindow, QWidget, QLabel, QPushButton, QSlider, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QFrame, QMessageBox, QFileDialog, QLineEdit, QScrollArea, QComboBox, QDesktopWidget, QMainWindow, QWidget, QLabel, QPushButton, QSlider, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 
 plotTypeDict = {
@@ -46,7 +44,7 @@ class MyWindow(QMainWindow):
         self.currentFile = None
     
         # Set window properties
-       # self.setWindowIcon()
+        # self.setWindowIcon()
         self.setWindowTitle("Fat Panda")
         self.setGeometry(100, 100, 750, 500)
 
@@ -60,7 +58,46 @@ class MyWindow(QMainWindow):
         self.plotChoice.addItem('Scatter Plot')
         self.plotChoice.addItem('Bar Plot')
         self.plotChoice.move(10, 50)
+        self.plotChoice.currentIndexChanged.connect(self.showPlotChoiceParameters)
  
+        """
+        Plot options unique for each plotting type.
+        Abandon all hope, ye who enter here.
+        """
+        
+        #bar
+        self.barPlotOptions = QFrame(self)
+        self.barPlotBox = QVBoxLayout(self.barPlotOptions)
+        self.barXLabel = QLineEdit()
+        self.barPlotBox.addWidget(self.barXLabel)
+        
+        self.barPlotOptions.setVisible(False)
+        self.barPlotOptions.setGeometry(20, 200, 100, 100)
+        
+        #line
+        self.linePlotOptions = QFrame(self)
+        self.linePlotBox = QVBoxLayout(self.linePlotOptions)
+        
+        self.lineTitle = QLabel()
+        self.lineTitle.setText("Line Plot Options:")
+        
+        self.lineXLabel = QLineEdit()
+        self.lineXLabel.setPlaceholderText("Name of x axis column...")
+        
+        self.linePlotBox.addWidget(self.lineTitle)
+        self.linePlotBox.addWidget(self.lineXLabel)
+        
+        self.linePlotOptions.setVisible(True)
+        self.linePlotOptions.setGeometry(20, 200, 200, 100)
+    
+        self.linePlotOptions.setStyleSheet(
+            "background-color: lightblue;"    
+        )
+    
+        """
+        It is done.
+        """
+    
         #Select data file
         self.selectLabel = QLabel(self)
         self.selectLabel.setText("Select Data")
@@ -93,7 +130,23 @@ class MyWindow(QMainWindow):
         self.plotButton.move(10, self.height() - 60)
         self.plotButton.size()
         self.plotButton.clicked.connect(self.onPlotButtonClicked)
-       
+        
+    def showPlotChoiceParameters(self):
+        plotType = self.plotChoice.currentText()
+        
+        
+        
+        
+    #show different plot parameter options 
+    def _showBarPlotOptions(self):
+        pass
+
+    def _showLinePlotOptions(self):
+        pass
+
+    def _showPiePlotOptions(self):
+        pass        
+
     def getDataFileToPlot(self):
         self.currentFile, _ = QFileDialog.getOpenFileName(self, 'Open File', '.', 'All Files (*.*)')
         
@@ -140,14 +193,11 @@ class MyWindow(QMainWindow):
         
         for methodName, fileTypeArray in method_filetype_mapping.items():
             fileType = self.currentFile.split(".")[-1]
-            print(fileType)
             if fileType in fileTypeArray: 
                 return methodName
         
             
     def addPlotImages(self):
-        
-        print("plotting images")
         
         home_dir = os.getcwd()
         path = f"{home_dir}\\temp"
@@ -184,5 +234,5 @@ if __name__ == '__main__':
    window = MyWindow()
    window.show()
    app.exec_()
-   print("Done!")
+   window.deleteImageFiles()
     

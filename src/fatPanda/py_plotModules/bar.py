@@ -42,11 +42,8 @@ def _plotBar(dataFrame, yAxisName, kwargs):
     #path to saveto
     
     home_dir = os.getcwd()
-    print(home_dir)
     fileName = f'{random_string(16)}.png'
-    print(fileName)
     path = f"{home_dir}\\temp\\{fileName}"
-    print(path)
 
     dataFrame.plot.bar(**kwargs).get_figure().savefig(path)
     
