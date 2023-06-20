@@ -22,7 +22,7 @@ plotTypeDict = {
     "Bar Plot": "bar",
     "Line Plot": "line",
     "Scatter Plot": "scatter",
-    "Pie Plot": "pie",
+    "scatter Plot": "pie",
     "Histogram": "hist",
     "Box Plot": "box",
     "Area Plot": "area",
@@ -68,11 +68,22 @@ class MyWindow(QMainWindow):
         #bar
         self.barPlotOptions = QFrame(self)
         self.barPlotBox = QVBoxLayout(self.barPlotOptions)
+        
+        self.barTitle = QLabel()
+        self.barTitle.setText("Bar Plot Options:")
+        
         self.barXLabel = QLineEdit()
+        self.barXLabel.setPlaceholderText("Name of x axis column...")
+        
+        self.barPlotBox.addWidget(self.barTitle)
         self.barPlotBox.addWidget(self.barXLabel)
         
         self.barPlotOptions.setVisible(False)
         self.barPlotOptions.setGeometry(20, 200, 100, 100)
+        
+        self.barPlotOptions.setStyleSheet(
+            "background-color: pink;"    
+        )
         
         #line
         self.linePlotOptions = QFrame(self)
@@ -92,6 +103,26 @@ class MyWindow(QMainWindow):
     
         self.linePlotOptions.setStyleSheet(
             "background-color: lightblue;"    
+        )
+        
+        #scatter
+        self.scatterPlotOptions = QFrame(self)
+        self.scatterPlotBox = QVBoxLayout(self.scatterPlotOptions)
+        
+        self.scatterTitle = QLabel()
+        self.scatterTitle.setText("Scatter Plot Options:")
+        
+        self.scatterXLabel = QLineEdit()
+        self.scatterXLabel.setPlaceholderText("Minumum Correlation...")
+        
+        self.scatterPlotBox.addWidget(self.scatterTitle)
+        self.scatterPlotBox.addWidget(self.scatterXLabel)
+        
+        self.scatterPlotOptions.setVisible(False)
+        self.scatterPlotOptions.setGeometry(20, 200, 200, 100)
+    
+        self.scatterPlotOptions.setStyleSheet(
+            "background-color: grey;"    
         )
     
         """
@@ -134,18 +165,29 @@ class MyWindow(QMainWindow):
     def showPlotChoiceParameters(self):
         plotType = self.plotChoice.currentText()
         
-        
-        
+        #horrendous, despicable, distraughtfull
+        if plotType == "Bar Plot":
+            self._showBarPlotOptions()
+        elif plotType == "Line Plot":
+            self._showLinePlotOptions()
+        elif plotType == "Scatter Plot":
+            self._showScatterPlotOptions()
         
     #show different plot parameter options 
     def _showBarPlotOptions(self):
-        pass
+        self.barPlotOptions.setVisible(True)
+        self.linePlotOptions.setVisible(False)
+        self.scatterPlotOptions.setVisible(False)   
 
     def _showLinePlotOptions(self):
-        pass
+        self.linePlotOptions.setVisible(True)
+        self.barPlotOptions.setVisible(False)
+        self.scatterPlotOptions.setVisible(False)  
 
-    def _showPiePlotOptions(self):
-        pass        
+    def _showScatterPlotOptions(self):
+        self.scatterPlotOptions.setVisible(True)      
+        self.linePlotOptions.setVisible(False)
+        self.barPlotOptions.setVisible(False)    
 
     def getDataFileToPlot(self):
         self.currentFile, _ = QFileDialog.getOpenFileName(self, 'Open File', '.', 'All Files (*.*)')
