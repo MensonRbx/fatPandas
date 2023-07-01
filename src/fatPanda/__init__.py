@@ -14,12 +14,9 @@ TODO:
 #Base imports
 import os 
 import sys
-import time
 
 module_path = os.path.abspath(os.path.join(os.getcwd(), 'src/fatPanda/'))
 sys.path.append(module_path)
-
-time.sleep(1)
 
 import scatter
 import pie

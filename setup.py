@@ -8,25 +8,20 @@ File creates .exe for app
 """
 
 import os
-import importlib
-
 import pandas as pd
 
 from src.fatPanda import FatPanda
-
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QFrame, QMessageBox, QFileDialog, QLineEdit, QScrollArea, QComboBox, QDesktopWidget, QMainWindow, QWidget, QLabel, QPushButton, QSlider, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 
 plotTypeDict = {
     "Bar Plot": "bar",
     "Line Plot": "line",
+    "Pie Plot": "pie",
     "Scatter Plot": "scatter",
-    "scatter Plot": "pie",
     "Histogram": "hist",
     "Box Plot": "box",
     "Area Plot": "area",
-    
 }
 
 method_filetype_mapping = {
@@ -43,8 +38,6 @@ class MyWindow(QMainWindow):
         self.fatPandaInstance = FatPanda()
         self.currentFile = None
     
-        # Set window properties
-        # self.setWindowIcon()
         self.setWindowTitle("Fat Panda")
         self.setGeometry(100, 100, 750, 500)
 
@@ -57,13 +50,9 @@ class MyWindow(QMainWindow):
         self.plotChoice.addItem('Line Plot')
         self.plotChoice.addItem('Scatter Plot')
         self.plotChoice.addItem('Bar Plot')
+        self.plotChoice.addItem("Pie Plot")
         self.plotChoice.move(10, 50)
         self.plotChoice.currentIndexChanged.connect(self.showPlotChoiceParameters)
- 
-        """
-        Plot options unique for each plotting type.
-        Abandon all hope, ye who enter here.
-        """
         
         #bar
         self.barPlotOptions = QFrame(self)
@@ -79,11 +68,9 @@ class MyWindow(QMainWindow):
         self.barPlotBox.addWidget(self.barXLabel)
         
         self.barPlotOptions.setVisible(False)
-        self.barPlotOptions.setGeometry(20, 200, 100, 100)
+        self.barPlotOptions.setGeometry(20, 200, 200, 100)
         
-        self.barPlotOptions.setStyleSheet(
-            "background-color: pink;"    
-        )
+        self.barPlotOptions.setStyleSheet("background-color: pink;")
         
         #line
         self.linePlotOptions = QFrame(self)
@@ -101,9 +88,7 @@ class MyWindow(QMainWindow):
         self.linePlotOptions.setVisible(True)
         self.linePlotOptions.setGeometry(20, 200, 200, 100)
     
-        self.linePlotOptions.setStyleSheet(
-            "background-color: lightblue;"    
-        )
+        self.linePlotOptions.setStyleSheet("background-color: lightblue;")
         
         #scatter
         self.scatterPlotOptions = QFrame(self)
@@ -112,22 +97,34 @@ class MyWindow(QMainWindow):
         self.scatterTitle = QLabel()
         self.scatterTitle.setText("Scatter Plot Options:")
         
-        self.scatterXLabel = QLineEdit()
-        self.scatterXLabel.setPlaceholderText("Minumum Correlation...")
+        self.scatterCorrelation = QLineEdit()
+        self.scatterCorrelation.setPlaceholderText("Minumum Correlation...")
         
         self.scatterPlotBox.addWidget(self.scatterTitle)
-        self.scatterPlotBox.addWidget(self.scatterXLabel)
+        self.scatterPlotBox.addWidget(self.scatterCorrelation)
         
         self.scatterPlotOptions.setVisible(False)
         self.scatterPlotOptions.setGeometry(20, 200, 200, 100)
     
-        self.scatterPlotOptions.setStyleSheet(
-            "background-color: grey;"    
-        )
+        self.scatterPlotOptions.setStyleSheet("background-color: grey;")
     
-        """
-        It is done.
-        """
+        #pie plot optiona
+        self.piePlotOptions = QFrame(self)
+        self.piePlotBox = QVBoxLayout(self.piePlotOptions)
+        
+        self.pieTitle = QLabel()
+        self.pieTitle.setText("Pie Plot Options:")
+        
+        self.pieProportion = QLineEdit()
+        self.pieProportion.setPlaceholderText("Minumum Proportion...")
+        
+        self.piePlotBox.addWidget(self.pieTitle)
+        self.piePlotBox.addWidget(self.pieProportion)
+        
+        self.piePlotOptions.setVisible(False)
+        self.piePlotOptions.setGeometry(20, 200, 200, 100)
+    
+        self.piePlotOptions.setStyleSheet("background-color: magenta;")
     
         #Select data file
         self.selectLabel = QLabel(self)
@@ -165,29 +162,20 @@ class MyWindow(QMainWindow):
     def showPlotChoiceParameters(self):
         plotType = self.plotChoice.currentText()
         
-        #horrendous, despicable, distraughtfull
-        if plotType == "Bar Plot":
-            self._showBarPlotOptions()
-        elif plotType == "Line Plot":
-            self._showLinePlotOptions()
-        elif plotType == "Scatter Plot":
-            self._showScatterPlotOptions()
-        
-    #show different plot parameter options 
-    def _showBarPlotOptions(self):
-        self.barPlotOptions.setVisible(True)
+        self.barPlotOptions.setVisible(False)
         self.linePlotOptions.setVisible(False)
         self.scatterPlotOptions.setVisible(False)   
-
-    def _showLinePlotOptions(self):
-        self.linePlotOptions.setVisible(True)
-        self.barPlotOptions.setVisible(False)
-        self.scatterPlotOptions.setVisible(False)  
-
-    def _showScatterPlotOptions(self):
-        self.scatterPlotOptions.setVisible(True)      
-        self.linePlotOptions.setVisible(False)
-        self.barPlotOptions.setVisible(False)    
+        self.piePlotOptions.setVisible(False)
+        
+        #horrendous, despicable, distraughtfull
+        if plotType == "Bar Plot":
+            self.barPlotOptions.setVisible(True)
+        elif plotType == "Line Plot":
+            self.linePlotOptions.setVisible(True)
+        elif plotType == "Scatter Plot":
+            self.scatterPlotOptions.setVisible(True)
+        elif plotType == "Pie Plot":
+            self.piePlotOptions.setVisible(True)
 
     def getDataFileToPlot(self):
         self.currentFile, _ = QFileDialog.getOpenFileName(self, 'Open File', '.', 'All Files (*.*)')
@@ -214,22 +202,33 @@ class MyWindow(QMainWindow):
         
         assert plotMethodName, "Error at _generate plot, no appropriate plot method found"
         
+        method = getattr(pd, plotMethodName)
+        dataFrame = method(self.currentFile)
+        plotType = self.plotChoice.currentText()
+        
         self.deleteCurrentImages()
         self.deleteImageFiles()
         
-        method = getattr(pd, plotMethodName)
-        
-        df = method(self.currentFile)
-        
+
         self.fatPandaInstance.getPlots(
-            df, 
-            kind = plotTypeDict[self.plotChoice.currentText()],
-            kwargs = {
-                "x": "Year/Month"
-            }    
+            dataFrame, 
+            kind = plotTypeDict[plotType],
+            kwargs = self._getKwargsForPlot(plotType)    
         )
         
         self.addPlotImages()
+        
+    def _getKwargsForPlot(self, plotType):
+            
+        if plotType == "Line Plot":
+            return {"x": self.lineXLabel.text()}
+        elif plotType == "Bar Plot":
+            return {"x": self.barXLabel.text()}
+        elif plotType == "Scatter Plot":
+            return {"minCorrelation": float(self.scatterCorrelation.text())}    
+        elif plotType == "Pie Plot":
+            return {"minProportion": float(self.pieProportion.text())}
+        
         
     def _getMappingMethod(self):
         

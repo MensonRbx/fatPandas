@@ -39,23 +39,17 @@ def getScatterPlots(dataFrame, kwargs):
 
 def _plotScatter(dataFrame, colName, rowName, kwargs):
     fig, axs = plt.subplots(1, 1, figsize = (5, 5))
-            
-    print("ERE")
     
     kwargs["x"] = colName
     kwargs["y"] = rowName
     kwargs["ax"] = axs
-    
             
     if not "title" in kwargs:
         axs.set_title(f'Scatter Plot Showing Correlation Between {colName} and {rowName}')
         
-    home_dir = os.getcwd()
-    print(home_dir)
+    home_dir = os.getcwd() 
     fileName = f'{random_string(16)}.png'
-    print(fileName)
     path = f"{home_dir}\\temp\\{fileName}"
-    print(path)
         
     dataFrame.plot.scatter(**kwargs).get_figure().savefig(path)
         

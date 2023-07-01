@@ -5,6 +5,7 @@ Created on Tue Apr 25 21:24:46 2023
 @author: BigBoy
 """
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -48,10 +49,15 @@ def _plotPie(column, kwargs): #works for series too
     kwCopy["autopct"] = "%.1f%%"
     kwCopy["ylabel"] = None
     
-    column.plot.pie(**kwCopy).get_figure().savefig(f'{random_string(16)}.png')
-         
     if not "title" in kwCopy:
         axs.set_title(f'Pie Chart Showing {column.name} proportion')
+    
+    home_dir = os.getcwd() 
+    fileName = f'{random_string(16)}.png'
+    path = f"{home_dir}\\temp\\{fileName}"
+    
+    column.plot.pie(**kwCopy).get_figure().savefig(path)
+         
         
         
 if __name__ == "__main__":
