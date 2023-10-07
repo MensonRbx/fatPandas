@@ -1,3 +1,4 @@
+import re
 import json
 import uuid
 import openai
@@ -33,8 +34,8 @@ EXAMPLE:
 
 No comments.
 Meaningful Plots. 
-Prefer Box Plots to Histograms. 
-Include titles in plot kwargs. 
+Prefer Box Plots and Scatter Plots to Histograms. 
+Include titles in plot kwargs to describe the plot (add "AI" at the end of title). 
 Aim for 10+ subDicts. 
 No unclosed brackets/errors. 
 Understand the task?
@@ -62,11 +63,19 @@ Previous reponse, when run with eval, resulted in an error, please generate code
 
 MAX_DEPTH = 5
 MODEL_NAME = "gpt-3.5-turbo-16k"
+VERTICAL_BOX_PLOTS = False
+MAX_BAR_PLOT_X_AXIS_LABEL_LENGTH = 5
+COLUMN_NAME_BLACKLIST = set([
+    "id",
+    "date",
+    "agency_ids",
+    "latitude",
+    "longitude"
+])
 
-df = pd.read_csv("datasets/listings.csv")
-df = df.sample(1000)
-openai.api_key = "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"
+recursion_count = 0
 
+#START OF AI FUNCTIONS
 def generateGUID():
     return uuid.uuid4().hex
 
@@ -87,55 +96,50 @@ def runCommand(kwargDict, conversation, atErrorDepth):
         plotName = generateGUID()+".png"
         currentPlot.savefig("generated_images//"+plotName)
         
-    except JSONDecodeError:
+    except Exception as error:
         plt.figure()
-        logging.warning(f"plot function failed for dict {kwargDict}")
+        logging.warning(f"Plot function failed for dict {kwargDict}\n")
+        logging.warning(f"Error When Plotting: {error}\n")
         
         """
-        TODO:
+        TODO: 
+            Error Handling
             
         """
-        
-        # if atErrorDepth:
-        #     console.print("Returning early from command, at error depth", style = "red")
-        #     return
-
-        # tempConversation = conversation.copy()
-        
-        # GPT_response = sendGPTRequest(tempConversation, f"""
-
-        # This error was encountered when processing command {command}: {err}. Redo this line, or come up with another 
-        # plot.
-
-        # """)
-        
-        # GPT_message = getMessageFromGPTResponse(GPT_response)
-        
-        # runCommand(GPT_message, conversation, True)
-        
-        # return
 
 def plotGPTCommand(textToSend, conversation, depth):
     assert depth <= MAX_DEPTH, "Maximum depth reaced for recursive plot function! Halting!"
     
-    logging.debug(f"Current plot func depth: {depth }")
+    logging.debug(f"Current plot func depth: {depth}")
     
     depth = depth or 0
     conversation = conversation or []
     
+    logging.debug("Sending request to GPT...")
     GPT_response = sendGPTRequest(conversation, textToSend)
     GPT_message = getMessageFromGPTResponse(GPT_response)
+    logging.debug("Received GPT Response")
     
     logging.debug(GPT_message)
     
     dictList = json.loads(GPT_message)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(dictList)) as executor:
-        for _, kwargDict in dictList.items():
-            logging.info(f"kwargDict: {str(kwargDict)}")
-            executor.submit(runCommand, kwargDict, conversation, False)
+    for _, kwargDict in dictList.items():
+        logging.debug(f"kwargDict: {str(kwargDict)}")
+        runCommand(kwargDict, conversation, False)
+        
+    """
+    Commented out part is for concurrent execution, not needed currently but keeping in case needed.
+    """
+   
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=len(dictList)) as executor:
+    #     logging.debug("Starting Thread Pool Executor")
+    #     for _, kwargDict in dictList.items():
+    #         logging.debug(f"kwargDict: {str(kwargDict)}")
+    #         executor.submit(runCommand, kwargDict, conversation, False)
     
-def beginPlotProcess():
+    
+def beginAIPlotProcess():
     
     logging.info("Pandas++ Starting")
     
@@ -146,22 +150,144 @@ def beginPlotProcess():
     logging.info("Initial prompt finished. Starting plotting function")
     
     plotGPTCommand(dfSample, conversation, 0)   
+#END OF AI FUNCTIONS
+
+#START OF NON-AI FUNCTIONS
+
+def normalizeString(inputString):
+    words = re.split(r'_', inputString)
+    return ' '.join(word.capitalize() if len(word) >= 2 else word for word in words)
+
+def plotDist(df, dfname, colname):
+    plotTitle = normalizeString(f"Distribution of {colname} in {dfname} data")
+    
+    binsToPlot = 20 #max(abs(round(len(df[colname])/2)), 30)
+    
+    #make histogram with title
+    plt.figure()
+    plt.hist(df[colname], bins = binsToPlot)
+    plt.title(plotTitle)
+    
+    #clear
+    plt.figure()
+    
+    #make box plot with title
+    df[colname].plot.box(
+        title = plotTitle, 
+        vert = VERTICAL_BOX_PLOTS
+    )
+    
+def plotPie(df, dfname, colname):
+    
+    plt.figure()
+    
+    df[colname].value_counts().plot.pie(
+        title = normalizeString(f"Proportion of values in {colname} in {dfname} data"),
+        autopct = "%.1f%%",
+    )
+    
+def plotBarChartWithTopValues(df, xAxisColumnName, yAxisColumnName):
+    #df: pandas DataFrame
+    #xAxisColumnName: columnName with object (assumed to be string) type values
+    #yAxisColumnName: columnName with number type values
+    
+    plotTitle = normalizeString(f"{xAxisColumnName} and {yAxisColumnName}")
+    plotType = "bar"
+    dfToPlot = df.sort_values(by = yAxisColumnName, ascending = False).head(10)
+    averageStringLength = round(df[xAxisColumnName].str.len().value_counts().mean())
+    
+    if averageStringLength > MAX_BAR_PLOT_X_AXIS_LABEL_LENGTH:
+        plotType = "barh"
+        dfToPlot = dfToPlot.sort_values(by = xAxisColumnName, ascending = True)
+        
+    dfToPlot.plot(
+        kind = plotType,
+        title = plotTitle, 
+        x = xAxisColumnName, 
+        y = yAxisColumnName
+    ).legend(
+        bbox_to_anchor = (1.0, 1.0),
+        #fontsize = 'small',
+    )
+        
+#Plot functions linked to the data type of a column
+dtypePlotMap = {
+    "bool": plotPie,
+    "int64": plotDist,
+    "float64": plotDist
+    }
+
+#Plot functions liked to data type of column: checked when object column found, compares object columns with datatypes
+objectPlotMap = {
+    "int64": plotBarChartWithTopValues,
+    "float64": plotBarChartWithTopValues
+}
+
+def createPlotsWithObjectDtype(df, objectColumnName):
+    for colname in df:
+        if colname == objectColumnName or colname in COLUMN_NAME_BLACKLIST:
+            continue
+        dtype = str(df[colname].dtype)
+        if dtype in objectPlotMap.keys():
+            objectPlotMap[dtype](df, objectColumnName, colname)
+
+def checkForOtherNumberColumnForScatterPlots(df, xColumnName):
+    pass
+
+def scrapeDataFrameForPlots(df, dfname, fromGroupBy):
+    global recursion_count
+    
+    print(f"scrapeDataFrameForPlots called with recusion count of {recursion_count}")
+    
+    recursion_count += 1
+    
+    df = df.ffill()
+    for colname in df:
+        if colname in COLUMN_NAME_BLACKLIST:
+            continue
+        
+        dtype = str(df[colname].dtype)
+        if dtype in dtypePlotMap.keys():
+            dtypePlotMap[dtype](df, dfname, colname)
+                
+        elif dtype == "object" and not fromGroupBy:
+            
+            columnSeries = df[colname]
+            
+            if len(list(set(columnSeries))) < 10:
+                columnGroupBy = df.groupby(colname)
+                for _, group in columnGroupBy:
+                    newName = f"{dfname}/{colname}/{group[colname].values[0]}" 
+                    scrapeDataFrameForPlots(group, newName, True)
+                    
+
+#END OF NON-AI FUNCTIONS
+
+df = pd.read_csv("datasets/fatal-police-shootings-data.csv")
+dfname = "Fatal Police Shootings in America"
+openai.api_key = "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"
 
 def main():
     
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="%(asctime)s %(levelname)s %(message)s",
         datefmt="%Y-%m-%d %H:%m:%S",
         # filename="log.log"
     )
     
-    logging.info("\nPandas++ Starting from main!")
+    logging.info("\nStarting AI Plots\n")
+    logging.info("\n",df.dtypes,"\n")
     
-    beginPlotProcess()
+    beginAIPlotProcess()
+    
+    logging.info("\nAI Plots Finished! Starting Plot Scrapper\n")
+    
+    scrapeDataFrameForPlots(df, dfname, False)
     
     logging.info("Execution Completed!\n")
-    
  
 if __name__ == "__main__":
     main()
+
+
