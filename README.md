@@ -1,4 +1,4 @@
-# Pandas++
+# fatPandas
 Python data analytics module based on pandas. Utilizes ChatGPT to come up with unique plots by sending it information about a pandas DataFrame and returns code to run to plot graphs.
 
 # Current Roadmap:
